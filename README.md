@@ -17,6 +17,7 @@ Overview of the used language version, tools and libraries.
 | seaborn          | 0.12.2  |
 | numpy            | 1.26.3  |
 | pandas           | 2.1.4   |
+| pillow           | 10.0.1  |
 | pytorch          | 2.2.0   |
 | torchvision      | 0.17.0  |
 
