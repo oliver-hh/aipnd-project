@@ -3,6 +3,7 @@ Module flower_classifier classifies flowers by a freshly trained network or
 a loaded network. It containts the following classes and methods:
 - Class FlowerClassifier
 """
+import os
 import time
 import json
 from collections import OrderedDict
@@ -185,6 +186,8 @@ class FlowerClassifier:
         ]))
         model.classifier = classifier
 
+        # Map classes to indices and create optimizer
+        model.class_to_idx = self.image_datasets['train'].class_to_idx  
         optimizer = optim.Adam(model.classifier.parameters(), lr=self.learning_rate)
 
         return model, optimizer
@@ -241,7 +244,7 @@ class FlowerClassifier:
 
         return data_loaders, image_datasets
 
-    def train_network(self, optimizer):
+    def train_network(self):
         """_summary_
         Train the neural network
         """
@@ -275,9 +278,9 @@ class FlowerClassifier:
                 train_loss = criterion(train_log_outputs, train_labels)
 
                 # Clear old gradients, backpropagate, update model params with computed gradient
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 train_loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
                 # Add current loss to the running loss
                 running_train_loss += train_loss.item()
@@ -358,8 +361,6 @@ class FlowerClassifier:
         """_summary_
         Save checkpoint
         """
-        # Map classes to indices
-        self.model.class_to_idx = self.image_datasets['train'].class_to_idx
 
         # Collect model data which should be saved
         checkpoint_data = {
@@ -374,8 +375,15 @@ class FlowerClassifier:
             'class_to_idx': self.model.class_to_idx
         }
 
+        # Create output folder for checkpoints if necessary
+        if not os.path.exists(self.save_dir):  
+            os.makedirs(self.save_dir)  
+
         # Save model data to file checkpoint.pth
-        torch.save(checkpoint_data, 'checkpoint.pth')
+        torch.save(checkpoint_data, os.path.join(self.save_dir, 
+                   f'checkpoint_{self.arch}_{self.epochs}_{self.hidden_units}_'
+                   f'{self.learning_rate}_{self.dropout_rate}.pth'))
+
     def get_modelaccuracy(self):
         """_summary_
         Determine the accuracy of the model with data it has not seen yet
@@ -400,8 +408,9 @@ class FlowerClassifier:
                 total_images += valid_labels.size(0)
                 correct_image_matches += (predicted_class == valid_labels).sum().item()
 
-        print('Accuracy of the network with validation data (not used before): '
-              f'{correct_image_matches / total_images:.3f}')
+        # Calculate accuracy
+        accuracy = correct_image_matches / total_images
+        return accuracy 
 
     def process_image(self, image):
         ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
@@ -470,12 +479,12 @@ class FlowerClassifier:
         top_classes = [idx_to_class[top_indices[i]] for i in range(5)]
 
         # Map category names
-        result = [{
+        category_class_mapping = [{
             'flower': cat_to_name[cls],
             'probability': round(prob, 3)
         } for cls, prob in zip(top_classes, top_k)]
 
-        return result
+        return category_class_mapping
 
 if __name__ == "__main__":
     USECASE_CHECKPOINT = 'checkpoint'
@@ -493,19 +502,23 @@ if __name__ == "__main__":
 
         probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
 
-        print(f'{IMAGE_PATH:<40} Probs')
-        print(f'{"-" * 40} {"-" * 5}')
-        for item in probabilities:
-            print(f'{item["flower"]:<40} {item["probability"]:>5.3f}')
-        print()
-
     elif USECASE == USECASE_TRAINING:
         # Test classification with a self trained neural network
         training_classifier = FlowerClassifier.from_training_data(
-            "./flowers", './checkpoints', "DenseNet121", 0.01, 512, 0.2, 5,
+            "./flowers", './checkpoints', "DenseNet121", 0.001, 512, 0.2, 5,
             category_mapping=CAT_NAMES, top_k=5, gpu=True)
 
-        #training_classifier.train_network
+        training_classifier.train_network()
+        accuracy = training_classifier.get_modelaccuracy()
+        print(f'\nAccuracy of the network with validation data (not used before): {accuracy:.3f}\n')
+        probabilities = training_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
+        training_classifier.save_checkpoint()
 
     else:
         raise ValueError("Incorrect use case")
+    
+    print(f'{IMAGE_PATH:<40} Probs')
+    print(f'{"-" * 40} {"-" * 5}')
+    for item in probabilities:
+        print(f'{item["flower"]:<40} {item["probability"]:>5.3f}')
+    print()
