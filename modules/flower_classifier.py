@@ -32,7 +32,8 @@ class FlowerClassifier:
                  # From checkpoint parameters
                  checkpoint_path=None,
                  # From training
-                 training_path=None, arch=None, learning_rate=None, hidden_units=None, epochs=None):
+                 training_path=None, arch=None, learning_rate=None, hidden_units=None,
+                 epochs=None, dropout_rate=None):
 
         # Initializae common parameters
         self.category_mapping = category_mapping
@@ -51,6 +52,7 @@ class FlowerClassifier:
             print(f'Epochs       : {self.epochs:>10}')
             print(f'Learning rate: {self.learning_rate:>10}')
             print(f'Hidden units : {self.hidden_units:>10}')
+            print(f'Dropout rate : {self.dropout_rate:>10}')
 
         elif (training_path is not None and arch is not None and learning_rate is not None and
               hidden_units is not None and epochs is not None):
@@ -59,6 +61,7 @@ class FlowerClassifier:
             self.learning_rate = learning_rate
             self.hidden_units = hidden_units
             self.epochs = epochs
+            self.dropout_rate = dropout_rate
             # Train the model
         else:
             raise ValueError("Incorrect constructor parameters")
@@ -140,6 +143,7 @@ class FlowerClassifier:
         self.epochs = checkpoint_data['epochs']
         self.learning_rate = checkpoint_data['learning_rate']
         self.hidden_units = checkpoint_data['hidden_units']
+        self.dropout_rate = checkpoint_data['dropout_rate']
 
         # Instantiate model from pre-trained model and set classifier
         model = self.get_pretrained_model(self.arch)

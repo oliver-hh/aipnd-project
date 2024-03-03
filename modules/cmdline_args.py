@@ -21,6 +21,7 @@ def get_train_input_args():
                             AlexNet, DenseNet121, ResNet18, VGG16. Default is 'DenseNet121'.
     - learning_rate (float, optional): Learning rate for model. Default is 0.01.  
     - hidden_units (int, optional): Number of hidden units in model. Default is 512.  
+    - dropout_rate (float, optional): Dropout rate from 0 to 1. Default is 0.2.  
     - epochs (int, optional): Number of epochs for training. Default is 20.  
     - gpu (bool, optional): Use GPU for training if available. 
 
@@ -58,6 +59,12 @@ def get_train_input_args():
         type=int,
         default=512,
         help='Number of hidden units in model'
+    )
+    parser.add_argument(
+        '--dropout_rate',
+        type=float,
+        default=0.2,
+        help='Dropout rate from 0 to 1'
     )
     parser.add_argument(
         '--epochs',
