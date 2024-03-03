@@ -42,8 +42,8 @@ class FlowerClassifier:
                  # From checkpoint parameters
                  checkpoint_path=None,
                  # From training
-                 training_path=None, arch=None, learning_rate=None, hidden_units=None,
-                 epochs=None, dropout_rate=None):
+                 save_dir=None, arch=None, learning_rate=None, hidden_units=None,
+                 dropout_rate=None, epochs=None):
 
         # Initializae common parameters
         self.data_dir = data_dir
@@ -57,10 +57,13 @@ class FlowerClassifier:
         if checkpoint_path is not None:
             self.checkpoint_path = checkpoint_path
             self.model, self.optimizer = self.load_model_from_checkpoint()
-        elif (data_dir is not None and training_path is not None and arch is not None and
+            if DEBUG:
+                print(f'\nModel loaded from checkpoint {self.checkpoint_path}')
+
+        elif (data_dir is not None and save_dir is not None and arch is not None and
               learning_rate is not None and hidden_units is not None and epochs is not None):
             self.data_dir = data_dir
-            self.training_path = training_path
+            self.save_dir = save_dir
             self.arch = arch
             self.learning_rate = learning_rate
             self.hidden_units = hidden_units
@@ -72,11 +75,13 @@ class FlowerClassifier:
             self.model, self.optimizer = self.create_pretrained_model()
             self.model.to(self.device)
 
+            if DEBUG:
+                print('\nModel created from training')
+
         else:
             raise ValueError("Incorrect constructor parameters")
 
         if DEBUG:
-            print(f'\nModel loaded from checkpoint {self.checkpoint_path}')
             print(f'Architecture : {self.arch:>10}')
             print(f'Epochs       : {self.epochs:>10}')
             print(f'Learning rate: {self.learning_rate:>10}')
@@ -101,16 +106,18 @@ class FlowerClassifier:
                    category_mapping=category_mapping, top_k=top_k, gpu=gpu)
 
     @classmethod
-    def from_training_data(cls, data_dir, training_path, arch, learning_rate, hidden_units, epochs,
-                           category_mapping, top_k, gpu):
+    def from_training_data(cls, data_dir, save_dir, arch, learning_rate, hidden_units,
+                           dropout_rate, epochs, category_mapping, top_k, gpu):
         """_summary_
         Generated an instance based on training data
 
         Args:
-            training_path (str): Path to the training image with subdirectories test, train, valid.
+            data_dir (str): Path to the training image with subdirectories test, train, valid.
+            save_dir (str): Path to the directory where the checkpoints will be saved.
             arch (string): Architecture of the model
             learning_rate (float): Learning rate
             hidden_units (int): Number of hideen units
+            dropout_rate (float): Dropout rate from 0 to 1
             epochs (int): Number of epochs used to train the network
             category_mapping (string): Path to to file with the category mappings.
             top_k (int): Nummber of the top categories of the prediction to be showwn.
@@ -119,8 +126,8 @@ class FlowerClassifier:
         Returns:
             FlowerClassifier: Instance based on checkoint
         """
-        return cls(data_dir, training_path=training_path, arch=arch, learning_rate=learning_rate,
-                   hidden_units=hidden_units, epochs=epochs,
+        return cls(data_dir, save_dir=save_dir, arch=arch, learning_rate=learning_rate,
+                   hidden_units=hidden_units, dropout_rate=dropout_rate, epochs=epochs,
                    category_mapping=category_mapping, top_k=top_k, gpu=gpu)
 
     def get_pretrained_model(self, arch):
@@ -471,18 +478,34 @@ class FlowerClassifier:
         return result
 
 if __name__ == "__main__":
-    checkpoint_classifier = FlowerClassifier.from_checkpoint(
-        './checkpoint.pth', category_mapping='./cat_to_name.json', top_k=5, gpu=True)
+    USECASE_CHECKPOINT = 'checkpoint'
+    USECASE_TRAINING = 'training'
+    USECASE = USECASE_TRAINING
 
     IMAGE_PATH = './flowers/test/10/image_07090.jpg'
     CAT_NAMES = './cat_to_name.json'
-    probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
 
-    print(f'{IMAGE_PATH:<40} Probs')
-    print(f'{"-" * 40} {"-" * 5}')
-    for item in probabilities:
-        print(f'{item["flower"]:<40} {item["probability"]:>5.3f}')
 
-    # trained_classifier = FlowerClassifier.from_training_data(
-    #     "path/to/training/data", "vgg16", 0.01, 100, 10,
-    #     category_mapping="path/to/mapping", top_k=5, gpu=True)
+    if USECASE == USECASE_CHECKPOINT:
+        # Test classification with saved checkpoint file
+        checkpoint_classifier = FlowerClassifier.from_checkpoint(
+            './checkpoint.pth', category_mapping='./cat_to_name.json', top_k=5, gpu=True)
+
+        probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
+
+        print(f'{IMAGE_PATH:<40} Probs')
+        print(f'{"-" * 40} {"-" * 5}')
+        for item in probabilities:
+            print(f'{item["flower"]:<40} {item["probability"]:>5.3f}')
+        print()
+
+    elif USECASE == USECASE_TRAINING:
+        # Test classification with a self trained neural network
+        training_classifier = FlowerClassifier.from_training_data(
+            "./flowers", './checkpoints', "DenseNet121", 0.01, 512, 0.2, 5,
+            category_mapping=CAT_NAMES, top_k=5, gpu=True)
+
+        #training_classifier.train_network
+
+    else:
+        raise ValueError("Incorrect use case")
