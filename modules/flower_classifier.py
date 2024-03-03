@@ -3,13 +3,21 @@ Module flower_classifier classifies flowers by a freshly trained network or
 a loaded network. It containts the following classes and methods:
 - Class FlowerClassifier
 """
+import time
 import json
+from collections import OrderedDict
 from PIL import Image
 import numpy as np
 
 import torch
+from torch import nn
 from torch import optim
-from torchvision import models
+from torch.utils.data import DataLoader
+from torchvision import (
+    datasets,
+    transforms,
+    models
+)
 
 # Constants
 DEBUG = True
@@ -17,6 +25,8 @@ ALEXNET = 'AlexNet'
 DENSENET121 = 'DenseNet121'
 RESNET18 = 'ResNet18'
 VGG16 = 'VGG16'
+OUTPUT_SIZE = 102
+BATCH_SIZE=128
 
 # Class FlowerClassifier
 
@@ -28,7 +38,7 @@ class FlowerClassifier:
 
     def __init__(self,
                  # Common parameters
-                 category_mapping=None, top_k=None, gpu=None,
+                 data_dir= None, category_mapping=None, top_k=None, gpu=None,
                  # From checkpoint parameters
                  checkpoint_path=None,
                  # From training
@@ -36,6 +46,7 @@ class FlowerClassifier:
                  epochs=None, dropout_rate=None):
 
         # Initializae common parameters
+        self.data_dir = data_dir
         self.category_mapping = category_mapping
         self.top_k = top_k
 
@@ -46,25 +57,31 @@ class FlowerClassifier:
         if checkpoint_path is not None:
             self.checkpoint_path = checkpoint_path
             self.model, self.optimizer = self.load_model_from_checkpoint()
-        if DEBUG:
-            print(f'Model loaded from checkpoint {self.checkpoint_path}')
-            print(f'Architecture : {self.arch:>10}')
-            print(f'Epochs       : {self.epochs:>10}')
-            print(f'Learning rate: {self.learning_rate:>10}')
-            print(f'Hidden units : {self.hidden_units:>10}')
-            print(f'Dropout rate : {self.dropout_rate:>10}\n')
-
-        elif (training_path is not None and arch is not None and learning_rate is not None and
-              hidden_units is not None and epochs is not None):
+        elif (data_dir is not None and training_path is not None and arch is not None and
+              learning_rate is not None and hidden_units is not None and epochs is not None):
+            self.data_dir = data_dir
             self.training_path = training_path
             self.arch = arch
             self.learning_rate = learning_rate
             self.hidden_units = hidden_units
             self.epochs = epochs
             self.dropout_rate = dropout_rate
-            # Train the model
+
+            self.data_loaders, self.image_datasets = self.create_dataloaders()
+
+            self.model, self.optimizer = self.create_pretrained_model()
+            self.model.to(self.device)
+
         else:
             raise ValueError("Incorrect constructor parameters")
+
+        if DEBUG:
+            print(f'\nModel loaded from checkpoint {self.checkpoint_path}')
+            print(f'Architecture : {self.arch:>10}')
+            print(f'Epochs       : {self.epochs:>10}')
+            print(f'Learning rate: {self.learning_rate:>10}')
+            print(f'Hidden units : {self.hidden_units:>10}')
+            print(f'Dropout rate : {self.dropout_rate:>10}\n')
 
     @classmethod
     def from_checkpoint(cls, checkpoint_path, category_mapping, top_k, gpu):
@@ -84,7 +101,7 @@ class FlowerClassifier:
                    category_mapping=category_mapping, top_k=top_k, gpu=gpu)
 
     @classmethod
-    def from_training_data(cls, training_path, arch, learning_rate, hidden_units, epochs,
+    def from_training_data(cls, data_dir, training_path, arch, learning_rate, hidden_units, epochs,
                            category_mapping, top_k, gpu):
         """_summary_
         Generated an instance based on training data
@@ -102,7 +119,7 @@ class FlowerClassifier:
         Returns:
             FlowerClassifier: Instance based on checkoint
         """
-        return cls(training_path=training_path, arch=arch, learning_rate=learning_rate,
+        return cls(data_dir, training_path=training_path, arch=arch, learning_rate=learning_rate,
                    hidden_units=hidden_units, epochs=epochs,
                    category_mapping=category_mapping, top_k=top_k, gpu=gpu)
 
@@ -129,6 +146,176 @@ class FlowerClassifier:
             return models.vgg16(weights=models.VGG16_Weights.DEFAULT)
         else:
             raise ValueError(f"Invalid arch value {arch}")
+
+    def create_pretrained_model(self):
+        """_summary_
+        Configure pretrained model
+        """
+        # Get an instance of a pretrained model. e.g. VGG16, ResNet50, DenseNet121, etc.)
+        model = self.get_pretrained_model(self.arch)
+
+        # Determine layer-sizes of the neural network
+        inputs_size = model.classifier.in_features
+        output_size = OUTPUT_SIZE 
+        hl1_size = self.hidden_units
+        hl2_size = self.hidden_units // 2
+
+        # Freeze parameters to prevent backpropagation
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Customize the model to the current classification and
+        # add dropout to prevent overfitting
+        classifier = nn.Sequential(OrderedDict([
+            ('fc1', nn.Linear(inputs_size, hl1_size)),
+            ('relu1', nn.ReLU()),
+            ('dropout1', nn.Dropout(p = self.dropout_rate)),
+            ('fc2', nn.Linear(hl1_size, hl2_size)),
+            ('relu2', nn.ReLU()),
+            ('dropout2', nn.Dropout(p = self.dropout_rate)),
+            ('fc3', nn.Linear(hl2_size, output_size)),
+            ('output', nn.LogSoftmax(dim = 1))
+        ]))
+        model.classifier = classifier
+
+        optimizer = optim.Adam(model.classifier.parameters(), lr=self.learning_rate)
+
+        return model, optimizer
+
+    def create_dataloaders(self):
+        """_summary_
+        Create dataloaders
+        """
+        train_dir = self.data_dir + '/train'
+        valid_dir = self.data_dir + '/valid'
+        test_dir = self.data_dir + '/test'
+
+        # Define your transforms for the training, validation, and testing sets
+        random_rotation = 30
+        image_size = 224
+        means_per_channel = [0.485, 0.456, 0.406]
+        stddevs_per_channel = [0.229, 0.224, 0.225]
+
+        data_transforms = {
+            'train':    transforms.Compose([
+                            transforms.RandomRotation(random_rotation),
+                            transforms.RandomResizedCrop(image_size),
+                            transforms.RandomHorizontalFlip(),
+                            transforms.ToTensor(),
+                            transforms.Normalize(means_per_channel, stddevs_per_channel),
+                        ]),
+            'valid':    transforms.Compose([
+                            transforms.Resize(image_size + 30),
+                            transforms.CenterCrop(image_size),
+                            transforms.ToTensor(),
+                            transforms.Normalize(means_per_channel, stddevs_per_channel),
+                        ]),
+            'test':     transforms.Compose([
+                            transforms.Resize(image_size + 30),
+                            transforms.CenterCrop(image_size),
+                            transforms.ToTensor(),
+                            transforms.Normalize(means_per_channel, stddevs_per_channel),
+                        ])
+        }
+
+        # Load the datasets with ImageFolder
+        image_datasets = {
+            'train': datasets.ImageFolder(train_dir, transform=data_transforms['train']),
+            'valid': datasets.ImageFolder(valid_dir, transform=data_transforms['valid']),
+            'test':  datasets.ImageFolder(test_dir,  transform=data_transforms['test'])
+        }
+
+        # Using the image datasets and the trainforms, define the dataloaders
+        data_loaders =  {
+            'train': DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True),
+            'valid': DataLoader(image_datasets['valid'], batch_size=BATCH_SIZE),
+            'test':  DataLoader(image_datasets['test'],  batch_size=BATCH_SIZE)
+        }
+
+        return data_loaders, image_datasets
+
+    def train_network(self, optimizer):
+        """_summary_
+        Train the neural network
+        """
+        print(f'Start training for device {self.device}')
+
+        # Initialize variables
+        criterion = nn.NLLLoss()
+        steps = 0
+        running_train_loss = 0
+        print_every = 10
+
+        # Set model to training mode
+        self.model.train()
+
+        # Start measurement
+        start_time = time.time()
+
+        # Iterate over all epochs to train the network
+        for epoch in range(1, self.epochs+1):
+            # Get inputs and labels of the current batch
+            train_loader = self.data_loaders['train']
+            for train_inputs, train_labels in train_loader:
+                steps += 1
+
+                # Move inputs and labels to device
+                train_inputs = train_inputs.to(self.device)
+                train_labels = train_labels.to(self.device)
+
+                # Forward pass through the neural network and compute the loss of the model
+                train_log_outputs = self.model.forward(train_inputs)
+                train_loss = criterion(train_log_outputs, train_labels)
+
+                # Clear old gradients, backpropagate, update model params with computed gradient
+                optimizer.zero_grad()
+                train_loss.backward()
+                optimizer.step()
+
+                # Add current loss to the running loss
+                running_train_loss += train_loss.item()
+
+                # Test the network after n batches and calulate train loss and test loss/accuracy
+                if steps % print_every == 0:
+                    # Initialize test loss and accuracy
+                    running_test_loss = 0
+                    accuracy = 0
+
+                    # Set model to evaluation mode
+                    self.model.eval()
+
+                    # Determine train/test-loss and accuracy with test data withoud gradient
+                    with torch.no_grad():
+                        # Perform the steps for test similar to training (see above)
+                        test_loader = self.data_loaders['test']
+                        for test_inputs, test_labels in test_loader:
+                            test_inputs = test_inputs.to(self.device)
+                            test_labels = test_labels.to(self.device)
+                            test_log_outputs = self.model.forward(test_inputs)
+                            test_loss = criterion(test_log_outputs, test_labels)
+                            running_test_loss += test_loss.item()
+
+                            # Calculate accuracy of the network so far
+                            test_output = torch.exp(test_log_outputs)
+                            _, top_class = test_output.topk(1, dim=1)
+                            equals = top_class == test_labels.view(*top_class.shape)
+                            accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
+
+                    # Output network metrics
+                    print(f'Epoch {epoch}/{self.epochs}.. '
+                        f'Train loss: {running_train_loss/print_every:.3f}.. '
+                        f'Test loss: {running_test_loss/len(test_loader):.3f}.. '
+                        f'Test accuracy: {accuracy/len(test_loader):.3f}.. '
+                        f'Time elapsed: {int(time.time()-start_time)}s')
+
+                    # Reset model to training mode and reset running_train_loss for next batch
+                    self.model.train()
+                    running_train_loss = 0
+
+        end_time = time.time()
+        elapsed_time = int(end_time - start_time)
+
+        print(f'End training for device {self.device}, duration={elapsed_time}s')
 
     def load_model_from_checkpoint(self):
         """_summary_
@@ -159,6 +346,55 @@ class FlowerClassifier:
         optimizer.load_state_dict(checkpoint_data['optimizer_state_dict'])
 
         return model, optimizer
+
+    def save_checkpoint(self):
+        """_summary_
+        Save checkpoint
+        """
+        # Map classes to indices
+        self.model.class_to_idx = self.image_datasets['train'].class_to_idx
+
+        # Collect model data which should be saved
+        checkpoint_data = {
+            'arch': 'DenseNet121',
+            'epochs': self.epochs,
+            'learning_rate': self.learning_rate,
+            'hidden_units': self.hidden_units,
+            'dropout_rate': self.dropout_rate,
+            'model_state_dict': self.model.state_dict(),  
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'classifier': self.model.classifier,
+            'class_to_idx': self.model.class_to_idx
+        }
+
+        # Save model data to file checkpoint.pth
+        torch.save(checkpoint_data, 'checkpoint.pth')
+    def get_modelaccuracy(self):
+        """_summary_
+        Determine the accuracy of the model with data it has not seen yet
+        """
+        # Initialize variables, assign model to device and set it to evaluation mode
+        total_images = 0
+        correct_image_matches = 0
+        self.model.eval()
+
+        # Get validation data loader
+        valid_loader = self.data_loaders['valid']
+        # Disable gradient computations, which are not needed during model evaluation
+        with torch.no_grad():
+            # Iterate over all validation that is unknown (not trained/tested yet)
+            for valid_images, valid_labels in valid_loader:
+                valid_images = valid_images.to(self.device)
+                valid_labels = valid_labels.to(self.device)
+                valid_outputs = self.model(valid_images)
+
+                # Get class with highest probs, compare with the labels / count correct matches
+                _, predicted_class = torch.max(valid_outputs.data, 1)
+                total_images += valid_labels.size(0)
+                correct_image_matches += (predicted_class == valid_labels).sum().item()
+
+        print('Accuracy of the network with validation data (not used before): '
+              f'{correct_image_matches / total_images:.3f}')
 
     def process_image(self, image):
         ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
@@ -234,7 +470,6 @@ class FlowerClassifier:
 
         return result
 
-
 if __name__ == "__main__":
     checkpoint_classifier = FlowerClassifier.from_checkpoint(
         './checkpoint.pth', category_mapping='./cat_to_name.json', top_k=5, gpu=True)
@@ -243,10 +478,10 @@ if __name__ == "__main__":
     CAT_NAMES = './cat_to_name.json'
     probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
 
-    print(f'{IMAGE_PATH:<33} Probs')
-    print(f'{"-" * 33} {"-" * 5}')
+    print(f'{IMAGE_PATH:<40} Probs')
+    print(f'{"-" * 40} {"-" * 5}')
     for item in probabilities:
-        print(f'{item["flower"]:<33} {item["probability"]:>5.3f}')
+        print(f'{item["flower"]:<40} {item["probability"]:>5.3f}')
 
     # trained_classifier = FlowerClassifier.from_training_data(
     #     "path/to/training/data", "vgg16", 0.01, 100, 10,
