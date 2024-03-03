@@ -455,8 +455,8 @@ class FlowerClassifier:
         top_k, top_indices = outputs.topk(5, dim=1)
 
         # Convert/flatten top_k and top_indices from a tensor to an one-dimensional array
-        top_k = top_k.numpy().flatten().tolist()
-        top_indices = top_indices.numpy().flatten()
+        top_k = top_k.cpu().numpy().flatten().tolist()
+        top_indices = top_indices.cpu().numpy().flatten()
 
         # Invert class_to_idx and map indices to the actual class labels
         idx_to_class = {v: k for k, v in self.model.class_to_idx.items()}
