@@ -31,3 +31,16 @@ Steps to download and install the images
 1. Download [Flower Data](https://s3.amazonaws.com/content.udacity-data.com/nd089/flower_data.tar.gz)
 2. Create a folder ```flowers``` on the project root.
 3. Unzip the files into the previously created directory
+
+## Training and Prediction from the Command Line
+
+import ast
+from PIL import Image
+import torchvision.transforms as transforms
+from torch.autograd import Variable
+import torchvision.models as models
+# from torch import __version__
+
+
+
+if __name__ == "__main__":  

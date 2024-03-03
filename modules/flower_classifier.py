@@ -3,7 +3,7 @@ Module flower_classifier classifies flowers by a freshly trained network or
 a loaded network. It containts the following classes and methods:
 - Class FlowerClassifier
 """
-
+import json
 from PIL import Image
 import numpy as np
 
@@ -52,7 +52,7 @@ class FlowerClassifier:
             print(f'Epochs       : {self.epochs:>10}')
             print(f'Learning rate: {self.learning_rate:>10}')
             print(f'Hidden units : {self.hidden_units:>10}')
-            print(f'Dropout rate : {self.dropout_rate:>10}')
+            print(f'Dropout rate : {self.dropout_rate:>10}\n')
 
         elif (training_path is not None and arch is not None and learning_rate is not None and
               hidden_units is not None and epochs is not None):
@@ -160,7 +160,6 @@ class FlowerClassifier:
 
         return model, optimizer
 
-
     def process_image(self, image):
         ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
             returns an Numpy array
@@ -193,10 +192,14 @@ class FlowerClassifier:
         np_image = np_image.transpose((2, 0, 1))
         return np_image
 
-    def classify_image(self, image_path):
+    def classify_image(self, image_path, category_names):
         """_summary_
         Classify image
         """
+        # Load categories in dictionary
+        with open(category_names, 'r', encoding='utf-8') as f:
+            cat_to_name = json.load(f)
+
         # Image processing (resize, crop and normalize)
         numpy_image = self.process_image(image_path)
 
@@ -223,18 +226,27 @@ class FlowerClassifier:
         idx_to_class = {v: k for k, v in self.model.class_to_idx.items()}
         top_classes = [idx_to_class[top_indices[i]] for i in range(5)]
 
-        return top_k, top_classes
+        # Map category names
+        result = [{
+            'flower': cat_to_name[cls],
+            'probability': round(prob, 3)
+        } for cls, prob in zip(top_classes, top_k)]
+
+        return result
 
 
 if __name__ == "__main__":
     checkpoint_classifier = FlowerClassifier.from_checkpoint(
         './checkpoint.pth', category_mapping='./cat_to_name.json', top_k=5, gpu=True)
 
-    probabilities, classes = checkpoint_classifier.classify_image(
-        './flowers/test/10/image_07090.jpg')
+    IMAGE_PATH = './flowers/test/10/image_07090.jpg'
+    CAT_NAMES = './cat_to_name.json'
+    probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
 
-    print(probabilities)
-    print(classes)
+    print(f'{IMAGE_PATH:<33} Probs')
+    print(f'{"-" * 33} {"-" * 5}')
+    for item in probabilities:
+        print(f'{item["flower"]:<33} {item["probability"]:>5.3f}')
 
     # trained_classifier = FlowerClassifier.from_training_data(
     #     "path/to/training/data", "vgg16", 0.01, 100, 10,
