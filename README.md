@@ -34,13 +34,10 @@ Steps to download and install the images
 
 ## Training and Prediction from the Command Line
 
-import ast
-from PIL import Image
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torchvision.models as models
-# from torch import __version__
 
+| Architecture | Duration | Accuracy |
+| ------------ | -------: | -------: |
+| AlexNet      |     659s |    86.6% |
+| DenseNet121  |     810s |    89.6% |
+| VGG16        |    1099s |    90.1% |
 
-
-if __name__ == "__main__":  

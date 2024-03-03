@@ -1,0 +1,71 @@
+Model created from training
+Architecture :      VGG16
+Epochs       :         10
+Learning rate:      0.001
+Hidden units :        512
+Dropout rate :        0.2
+
+Start training for device cuda:0
+Epoch 1/10.. Train loss: 4.366.. Test loss: 3.630.. Test accuracy: 0.214.. Time elapsed: 20s
+Epoch 1/10.. Train loss: 3.544.. Test loss: 2.698.. Test accuracy: 0.397.. Time elapsed: 42s
+Epoch 1/10.. Train loss: 2.961.. Test loss: 2.010.. Test accuracy: 0.519.. Time elapsed: 64s
+Epoch 1/10.. Train loss: 2.389.. Test loss: 1.515.. Test accuracy: 0.630.. Time elapsed: 85s
+Epoch 1/10.. Train loss: 2.111.. Test loss: 1.328.. Test accuracy: 0.630.. Time elapsed: 107s
+Epoch 2/10.. Train loss: 1.815.. Test loss: 1.166.. Test accuracy: 0.685.. Time elapsed: 128s
+Epoch 2/10.. Train loss: 1.597.. Test loss: 1.042.. Test accuracy: 0.719.. Time elapsed: 150s
+Epoch 2/10.. Train loss: 1.533.. Test loss: 0.964.. Test accuracy: 0.729.. Time elapsed: 172s
+Epoch 2/10.. Train loss: 1.462.. Test loss: 0.853.. Test accuracy: 0.748.. Time elapsed: 194s
+Epoch 2/10.. Train loss: 1.390.. Test loss: 0.745.. Test accuracy: 0.800.. Time elapsed: 216s
+Epoch 3/10.. Train loss: 1.252.. Test loss: 0.856.. Test accuracy: 0.749.. Time elapsed: 237s
+Epoch 3/10.. Train loss: 1.233.. Test loss: 0.742.. Test accuracy: 0.793.. Time elapsed: 259s
+Epoch 3/10.. Train loss: 1.104.. Test loss: 0.740.. Test accuracy: 0.792.. Time elapsed: 281s
+Epoch 3/10.. Train loss: 1.158.. Test loss: 0.699.. Test accuracy: 0.793.. Time elapsed: 300s
+Epoch 3/10.. Train loss: 1.123.. Test loss: 0.642.. Test accuracy: 0.831.. Time elapsed: 322s
+Epoch 4/10.. Train loss: 1.159.. Test loss: 0.607.. Test accuracy: 0.832.. Time elapsed: 341s
+Epoch 4/10.. Train loss: 1.053.. Test loss: 0.636.. Test accuracy: 0.825.. Time elapsed: 361s
+Epoch 4/10.. Train loss: 0.968.. Test loss: 0.621.. Test accuracy: 0.831.. Time elapsed: 379s
+Epoch 4/10.. Train loss: 0.996.. Test loss: 0.576.. Test accuracy: 0.853.. Time elapsed: 403s
+Epoch 4/10.. Train loss: 1.053.. Test loss: 0.609.. Test accuracy: 0.817.. Time elapsed: 425s
+Epoch 5/10.. Train loss: 0.931.. Test loss: 0.589.. Test accuracy: 0.837.. Time elapsed: 447s
+Epoch 5/10.. Train loss: 0.867.. Test loss: 0.609.. Test accuracy: 0.836.. Time elapsed: 465s
+Epoch 5/10.. Train loss: 0.877.. Test loss: 0.552.. Test accuracy: 0.837.. Time elapsed: 487s
+Epoch 5/10.. Train loss: 0.900.. Test loss: 0.547.. Test accuracy: 0.850.. Time elapsed: 509s
+Epoch 5/10.. Train loss: 0.844.. Test loss: 0.556.. Test accuracy: 0.861.. Time elapsed: 530s
+Epoch 5/10.. Train loss: 0.786.. Test loss: 0.531.. Test accuracy: 0.859.. Time elapsed: 546s
+Epoch 6/10.. Train loss: 0.839.. Test loss: 0.514.. Test accuracy: 0.869.. Time elapsed: 564s
+Epoch 6/10.. Train loss: 0.877.. Test loss: 0.550.. Test accuracy: 0.853.. Time elapsed: 582s
+Epoch 6/10.. Train loss: 0.782.. Test loss: 0.468.. Test accuracy: 0.869.. Time elapsed: 600s
+Epoch 6/10.. Train loss: 0.760.. Test loss: 0.483.. Test accuracy: 0.866.. Time elapsed: 620s
+Epoch 6/10.. Train loss: 0.769.. Test loss: 0.456.. Test accuracy: 0.877.. Time elapsed: 642s
+Epoch 7/10.. Train loss: 0.776.. Test loss: 0.503.. Test accuracy: 0.865.. Time elapsed: 664s
+Epoch 7/10.. Train loss: 0.821.. Test loss: 0.435.. Test accuracy: 0.890.. Time elapsed: 686s
+Epoch 7/10.. Train loss: 0.773.. Test loss: 0.476.. Test accuracy: 0.877.. Time elapsed: 708s
+Epoch 7/10.. Train loss: 0.757.. Test loss: 0.443.. Test accuracy: 0.879.. Time elapsed: 730s
+Epoch 7/10.. Train loss: 0.801.. Test loss: 0.494.. Test accuracy: 0.865.. Time elapsed: 752s
+Epoch 8/10.. Train loss: 0.787.. Test loss: 0.498.. Test accuracy: 0.855.. Time elapsed: 773s
+Epoch 8/10.. Train loss: 0.757.. Test loss: 0.476.. Test accuracy: 0.872.. Time elapsed: 791s
+Epoch 8/10.. Train loss: 0.679.. Test loss: 0.455.. Test accuracy: 0.882.. Time elapsed: 808s
+Epoch 8/10.. Train loss: 0.673.. Test loss: 0.503.. Test accuracy: 0.869.. Time elapsed: 829s
+Epoch 8/10.. Train loss: 0.724.. Test loss: 0.444.. Test accuracy: 0.889.. Time elapsed: 852s
+Epoch 9/10.. Train loss: 0.745.. Test loss: 0.477.. Test accuracy: 0.870.. Time elapsed: 873s
+Epoch 9/10.. Train loss: 0.740.. Test loss: 0.480.. Test accuracy: 0.877.. Time elapsed: 895s
+Epoch 9/10.. Train loss: 0.687.. Test loss: 0.499.. Test accuracy: 0.870.. Time elapsed: 917s
+Epoch 9/10.. Train loss: 0.707.. Test loss: 0.454.. Test accuracy: 0.879.. Time elapsed: 941s
+Epoch 9/10.. Train loss: 0.678.. Test loss: 0.467.. Test accuracy: 0.868.. Time elapsed: 964s
+Epoch 10/10.. Train loss: 0.636.. Test loss: 0.536.. Test accuracy: 0.858.. Time elapsed: 986s
+Epoch 10/10.. Train loss: 0.695.. Test loss: 0.448.. Test accuracy: 0.881.. Time elapsed: 1009s
+Epoch 10/10.. Train loss: 0.727.. Test loss: 0.469.. Test accuracy: 0.882.. Time elapsed: 1032s
+Epoch 10/10.. Train loss: 0.686.. Test loss: 0.423.. Test accuracy: 0.876.. Time elapsed: 1054s
+Epoch 10/10.. Train loss: 0.616.. Test loss: 0.478.. Test accuracy: 0.882.. Time elapsed: 1077s
+Epoch 10/10.. Train loss: 0.650.. Test loss: 0.414.. Test accuracy: 0.881.. Time elapsed: 1099s
+End training for device cuda:0, duration=1099s
+
+Accuracy of the network with validation data (not used before): 0.901
+
+./flowers/test/10/image_07090.jpg        Probs
+---------------------------------------- -----
+globe thistle                            0.995
+colt's foot                              0.003
+artichoke                                0.001
+common dandelion                         0.000
+pincushion flower                        0.000
