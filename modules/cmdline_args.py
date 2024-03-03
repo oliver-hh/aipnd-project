@@ -18,7 +18,7 @@ def get_train_input_args():
     - data_dir (str): Path to the folder of data. This is a positional argument.  
     - save_dir (str, optional): Path to save the trained model. Default is '.'.  
     - arch (str, optional): CNN Model Architecture. Choices are
-                            AlexNet, DenseNet121, ResNet18, VGG16. Default is 'DenseNet121'.
+                            AlexNet, DenseNet121, VGG16. Default is 'DenseNet121'.
     - learning_rate (float, optional): Learning rate for model. Default is 0.01.  
     - hidden_units (int, optional): Number of hidden units in model. Default is 512.  
     - dropout_rate (float, optional): Dropout rate from 0 to 1. Default is 0.2.  
@@ -44,7 +44,7 @@ def get_train_input_args():
     parser.add_argument(
         '--arch',
         type=str,
-        choices=['AlexNet', 'DenseNet121', 'ResNet18', 'VGG16'],
+        choices=['AlexNet', 'DenseNet121', 'VGG16'],
         default='DenseNet121',
         help='CNN Model Architecture'
     )

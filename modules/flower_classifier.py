@@ -24,7 +24,6 @@ from torchvision import (
 DEBUG = True
 ALEXNET = 'AlexNet'
 DENSENET121 = 'DenseNet121'
-RESNET18 = 'ResNet18'
 VGG16 = 'VGG16'
 OUTPUT_SIZE = 102
 BATCH_SIZE=128
@@ -139,7 +138,7 @@ class FlowerClassifier:
 
         Raises:
             ValueError: If 'arch' does not match any of the specified architectures.
-                        (AlexNet, DenseNet121, ResNet18, VGG16)
+                        (AlexNet, DenseNet121, VGG16)
 
         Returns:
              torch.nn.Module: A pre-trained model of the specified architecture.  
@@ -148,8 +147,6 @@ class FlowerClassifier:
             return models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
         elif arch == DENSENET121:
             return models.densenet121(weights=models.DenseNet121_Weights.DEFAULT)
-        elif arch == RESNET18:
-            return models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         elif arch == VGG16:
             return models.vgg16(weights=models.VGG16_Weights.DEFAULT)
         else:
@@ -163,7 +160,15 @@ class FlowerClassifier:
         model = self.get_pretrained_model(self.arch)
 
         # Determine layer-sizes of the neural network
-        inputs_size = model.classifier.in_features
+        if self.arch == 'DenseNet121':
+            inputs_size = model.classifier.in_features
+        else:
+            # AlexNet, VGG16
+            first_linear_layer = next(
+                layer for layer in model.classifier.children() if isinstance(layer, torch.nn.Linear)
+            )  
+            inputs_size = first_linear_layer.in_features
+
         output_size = OUTPUT_SIZE 
         hl1_size = self.hidden_units
         hl2_size = self.hidden_units // 2
@@ -503,9 +508,10 @@ if __name__ == "__main__":
         probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
 
     elif USECASE == USECASE_TRAINING:
-        # Test classification with a self trained neural network
+        # Test classification with a self trained neural network.
+        # Valid architectures: 'AlexNet', 'DenseNet121', 'VGG16'
         training_classifier = FlowerClassifier.from_training_data(
-            "./flowers", './checkpoints', "DenseNet121", 0.001, 512, 0.2, 5,
+            "./flowers", './checkpoints', 'VGG16', 0.001, 512, 0.2, 10,
             category_mapping=CAT_NAMES, top_k=5, gpu=True)
 
         training_classifier.train_network()
