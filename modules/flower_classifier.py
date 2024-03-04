@@ -26,7 +26,7 @@ ALEXNET = 'AlexNet'
 DENSENET121 = 'DenseNet121'
 VGG16 = 'VGG16'
 OUTPUT_SIZE = 102
-BATCH_SIZE=128
+BATCH_SIZE = 128
 
 # Class FlowerClassifier
 
@@ -38,7 +38,7 @@ class FlowerClassifier:
 
     def __init__(self,
                  # Common parameters
-                 data_dir= None, category_mapping=None, top_k=None, gpu=None,
+                 data_dir=None, category_mapping=None, top_k=None, gpu=None,
                  # From checkpoint parameters
                  checkpoint_path=None,
                  # From training
@@ -145,12 +145,12 @@ class FlowerClassifier:
         """
         if arch == ALEXNET:
             return models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
-        elif arch == DENSENET121:
+        if arch == DENSENET121:
             return models.densenet121(weights=models.DenseNet121_Weights.DEFAULT)
-        elif arch == VGG16:
+        if arch == VGG16:
             return models.vgg16(weights=models.VGG16_Weights.DEFAULT)
-        else:
-            raise ValueError(f"Invalid arch value {arch}")
+
+        raise ValueError(f"Invalid arch value {arch}")
 
     def create_pretrained_model(self):
         """_summary_
@@ -164,12 +164,11 @@ class FlowerClassifier:
             inputs_size = model.classifier.in_features
         else:
             # AlexNet, VGG16
-            first_linear_layer = next(
-                layer for layer in model.classifier.children() if isinstance(layer, torch.nn.Linear)
-            )  
+            first_linear_layer = next(layer for layer in model.classifier.children()
+                                      if isinstance(layer, torch.nn.Linear))
             inputs_size = first_linear_layer.in_features
 
-        output_size = OUTPUT_SIZE 
+        output_size = OUTPUT_SIZE
         hl1_size = self.hidden_units
         hl2_size = self.hidden_units // 2
 
@@ -182,18 +181,19 @@ class FlowerClassifier:
         classifier = nn.Sequential(OrderedDict([
             ('fc1', nn.Linear(inputs_size, hl1_size)),
             ('relu1', nn.ReLU()),
-            ('dropout1', nn.Dropout(p = self.dropout_rate)),
+            ('dropout1', nn.Dropout(p=self.dropout_rate)),
             ('fc2', nn.Linear(hl1_size, hl2_size)),
             ('relu2', nn.ReLU()),
-            ('dropout2', nn.Dropout(p = self.dropout_rate)),
+            ('dropout2', nn.Dropout(p=self.dropout_rate)),
             ('fc3', nn.Linear(hl2_size, output_size)),
-            ('output', nn.LogSoftmax(dim = 1))
+            ('output', nn.LogSoftmax(dim=1))
         ]))
         model.classifier = classifier
 
         # Map classes to indices and create optimizer
-        model.class_to_idx = self.image_datasets['train'].class_to_idx  
-        optimizer = optim.Adam(model.classifier.parameters(), lr=self.learning_rate)
+        model.class_to_idx = self.image_datasets['train'].class_to_idx
+        optimizer = optim.Adam(
+            model.classifier.parameters(), lr=self.learning_rate)
 
         return model, optimizer
 
@@ -213,24 +213,24 @@ class FlowerClassifier:
 
         data_transforms = {
             'train':    transforms.Compose([
-                            transforms.RandomRotation(random_rotation),
-                            transforms.RandomResizedCrop(image_size),
-                            transforms.RandomHorizontalFlip(),
-                            transforms.ToTensor(),
-                            transforms.Normalize(means_per_channel, stddevs_per_channel),
-                        ]),
+                transforms.RandomRotation(random_rotation),
+                transforms.RandomResizedCrop(image_size),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(means_per_channel, stddevs_per_channel),
+            ]),
             'valid':    transforms.Compose([
-                            transforms.Resize(image_size + 30),
-                            transforms.CenterCrop(image_size),
-                            transforms.ToTensor(),
-                            transforms.Normalize(means_per_channel, stddevs_per_channel),
-                        ]),
+                transforms.Resize(image_size + 30),
+                transforms.CenterCrop(image_size),
+                transforms.ToTensor(),
+                transforms.Normalize(means_per_channel, stddevs_per_channel),
+            ]),
             'test':     transforms.Compose([
-                            transforms.Resize(image_size + 30),
-                            transforms.CenterCrop(image_size),
-                            transforms.ToTensor(),
-                            transforms.Normalize(means_per_channel, stddevs_per_channel),
-                        ])
+                transforms.Resize(image_size + 30),
+                transforms.CenterCrop(image_size),
+                transforms.ToTensor(),
+                transforms.Normalize(means_per_channel, stddevs_per_channel),
+            ])
         }
 
         # Load the datasets with ImageFolder
@@ -241,7 +241,7 @@ class FlowerClassifier:
         }
 
         # Using the image datasets and the trainforms, define the dataloaders
-        data_loaders =  {
+        data_loaders = {
             'train': DataLoader(image_datasets['train'], batch_size=BATCH_SIZE, shuffle=True),
             'valid': DataLoader(image_datasets['valid'], batch_size=BATCH_SIZE),
             'test':  DataLoader(image_datasets['test'],  batch_size=BATCH_SIZE)
@@ -307,21 +307,24 @@ class FlowerClassifier:
                             test_inputs = test_inputs.to(self.device)
                             test_labels = test_labels.to(self.device)
                             test_log_outputs = self.model.forward(test_inputs)
-                            test_loss = criterion(test_log_outputs, test_labels)
+                            test_loss = criterion(
+                                test_log_outputs, test_labels)
                             running_test_loss += test_loss.item()
 
                             # Calculate accuracy of the network so far
                             test_output = torch.exp(test_log_outputs)
                             _, top_class = test_output.topk(1, dim=1)
-                            equals = top_class == test_labels.view(*top_class.shape)
-                            accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
+                            equals = top_class == test_labels.view(
+                                *top_class.shape)
+                            accuracy += torch.mean(
+                                equals.type(torch.FloatTensor)).item()
 
                     # Output network metrics
                     print(f'Epoch {epoch}/{self.epochs}.. '
-                        f'Train loss: {running_train_loss/print_every:.3f}.. '
-                        f'Test loss: {running_test_loss/len(test_loader):.3f}.. '
-                        f'Test accuracy: {accuracy/len(test_loader):.3f}.. '
-                        f'Time elapsed: {int(time.time()-start_time)}s')
+                          f'Train loss: {running_train_loss/print_every:.3f}.. '
+                          f'Test loss: {running_test_loss/len(test_loader):.3f}.. '
+                          f'Test accuracy: {accuracy/len(test_loader):.3f}.. '
+                          f'Time elapsed: {int(time.time()-start_time)}s')
 
                     # Reset model to training mode and reset running_train_loss for next batch
                     self.model.train()
@@ -330,7 +333,8 @@ class FlowerClassifier:
         end_time = time.time()
         elapsed_time = int(end_time - start_time)
 
-        print(f'End training for device {self.device}, duration={elapsed_time}s')
+        print(
+            f'End training for device {self.device}, duration={elapsed_time}s')
 
     def load_model_from_checkpoint(self):
         """_summary_
@@ -374,20 +378,20 @@ class FlowerClassifier:
             'learning_rate': self.learning_rate,
             'hidden_units': self.hidden_units,
             'dropout_rate': self.dropout_rate,
-            'model_state_dict': self.model.state_dict(),  
+            'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'classifier': self.model.classifier,
             'class_to_idx': self.model.class_to_idx
         }
 
         # Create output folder for checkpoints if necessary
-        if not os.path.exists(self.save_dir):  
-            os.makedirs(self.save_dir)  
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
 
         # Save model data to file checkpoint.pth
-        torch.save(checkpoint_data, os.path.join(self.save_dir, 
+        torch.save(checkpoint_data, os.path.join(self.save_dir,
                    f'checkpoint_{self.arch}_{self.epochs}_{self.hidden_units}_'
-                   f'{self.learning_rate}_{self.dropout_rate}.pth'))
+                                                 f'{self.learning_rate}_{self.dropout_rate}.pth'))
 
     def get_modelaccuracy(self):
         """_summary_
@@ -411,11 +415,12 @@ class FlowerClassifier:
                 # Get class with highest probs, compare with the labels / count correct matches
                 _, predicted_class = torch.max(valid_outputs.data, 1)
                 total_images += valid_labels.size(0)
-                correct_image_matches += (predicted_class == valid_labels).sum().item()
+                correct_image_matches += (predicted_class ==
+                                          valid_labels).sum().item()
 
         # Calculate accuracy
-        accuracy = correct_image_matches / total_images
-        return accuracy 
+        result = correct_image_matches / total_images
+        return result
 
     def process_image(self, image):
         ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
@@ -468,7 +473,8 @@ class FlowerClassifier:
         # Set model to evaluation mode and determine the outputs for the image
         self.model.eval()
         with torch.no_grad():
-            self.model, image = self.model.to(self.device), image.to(self.device)
+            self.model, image = self.model.to(
+                self.device), image.to(self.device)
             log_outputs = self.model.forward(image)
             outputs = torch.exp(log_outputs)
 
@@ -491,6 +497,7 @@ class FlowerClassifier:
 
         return category_class_mapping
 
+
 if __name__ == "__main__":
     USECASE_CHECKPOINT = 'checkpoint'
     USECASE_TRAINING = 'training'
@@ -499,13 +506,13 @@ if __name__ == "__main__":
     IMAGE_PATH = './flowers/test/10/image_07090.jpg'
     CAT_NAMES = './cat_to_name.json'
 
-
     if USECASE == USECASE_CHECKPOINT:
         # Test classification with saved checkpoint file
         checkpoint_classifier = FlowerClassifier.from_checkpoint(
             './checkpoint.pth', category_mapping='./cat_to_name.json', top_k=5, gpu=True)
 
-        probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
+        probabilities = checkpoint_classifier.classify_image(
+            IMAGE_PATH, CAT_NAMES)
 
     elif USECASE == USECASE_TRAINING:
         # Test classification with a self trained neural network.
@@ -515,14 +522,15 @@ if __name__ == "__main__":
             category_mapping=CAT_NAMES, top_k=5, gpu=True)
 
         training_classifier.train_network()
-        accuracy = training_classifier.get_modelaccuracy()
-        print(f'\nAccuracy of the network with validation data (not used before): {accuracy:.3f}\n')
-        probabilities = training_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
+        print('\nAccuracy of the network with validation data (not used before): '
+              f'{training_classifier.get_modelaccuracy():.3f}\n')
+        probabilities = training_classifier.classify_image(
+            IMAGE_PATH, CAT_NAMES)
         training_classifier.save_checkpoint()
 
     else:
         raise ValueError("Incorrect use case")
-    
+
     print(f'{IMAGE_PATH:<40} Probs')
     print(f'{"-" * 40} {"-" * 5}')
     for item in probabilities:
