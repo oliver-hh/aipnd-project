@@ -28,9 +28,6 @@ VGG16 = 'VGG16'
 OUTPUT_SIZE = 102
 BATCH_SIZE = 128
 
-# Class FlowerClassifier
-
-
 class FlowerClassifier:
     """_summary_
     Flower Classifier
@@ -72,7 +69,7 @@ class FlowerClassifier:
 
             self.data_loaders, self.image_datasets = self.create_dataloaders()
 
-            self.model, self.optimizer = self.create_pretrained_model()
+            self.model, self.optimizer = self.create_training_model()
             self.model.to(self.device)
 
             if DEBUG:
@@ -152,9 +149,19 @@ class FlowerClassifier:
 
         raise ValueError(f"Invalid arch value {arch}")
 
-    def create_pretrained_model(self):
-        """_summary_
-        Configure pretrained model
+    def create_training_model(self):
+        """
+        Creates and returns a customized training model along with an optimizer. The instance 
+        of a pre-trained is of type AlexNet, DenseNet121 or VGG16. 
+        
+        The optimizer is using the Adam-algorithm. 
+
+        Parameters:
+        No parameters are required for this method.
+
+        Returns:
+        model (torchvision.models): The customized pre-trained model for training.
+        optimizer (torch.optim): The optimizer for training the model.
         """
         # Get an instance of a pretrained model. e.g. VGG16, ResNet50, DenseNet121, etc.)
         model = self.get_pretrained_model(self.arch)
@@ -198,8 +205,25 @@ class FlowerClassifier:
         return model, optimizer
 
     def create_dataloaders(self):
-        """_summary_
-        Create dataloaders
+        """
+        This method creates dataloaders for training, validation, and testing datasets.
+
+        A series of transformations to the images are applied in each dataset, including
+        random rotation, resizing, flipping, and normalization for the training set.
+        Resizing, center cropping, and normalization for the validation and testing sets.
+
+        Dataloaders for each dataset are defined using  a specified batch size.
+        The training dataloader shuffles the data to prevent the model from learning the
+        order of the images.
+
+        The method returns a dictionary of the dataloaders and a dictionary of the image datasets.
+
+        Parameters:
+        None
+
+        Returns:
+        data_loaders (dict): Dataloaders for the training, validation, and testing datasets.
+        image_datasets (dict): Image datasets for training, validation, and testing.
         """
         train_dir = self.data_dir + '/train'
         valid_dir = self.data_dir + '/valid'
@@ -249,10 +273,21 @@ class FlowerClassifier:
 
         return data_loaders, image_datasets
 
-    def train_network(self):
-        """_summary_
-        Train the neural network
+    def train_model(self):
         """
+        Training of the neural network model. Initializes variables and sets the model to
+        training mode. Iterates over all epochs and inputs to train the network.
+        The inputs and labels are moved to the specified device, then a forward pass is
+        performed through the network, and the loss is computed. The gradients are then
+        cleared, the loss is backpropagated, and the model parameters are updated.
+
+        After a certain number of steps, the network is tested, and the train loss and
+        test loss/accuracy are calculated.
+
+        Returns:
+        None.
+        """
+
         print(f'Start training for device {self.device}')
 
         # Initialize variables
@@ -337,8 +372,17 @@ class FlowerClassifier:
             f'End training for device {self.device}, duration={elapsed_time}s')
 
     def load_model_from_checkpoint(self):
-        """_summary_
-        Load the model from a file
+        """
+        Loads a trained model from a checkpoint file by loading required data from the file.
+        It then retrieves architecture, number of epochs, learning rate, hidden units, and
+        dropout rate from the loaded data.
+        The model gets instantiated from a pre-trained model and the classifier is set. After
+        that the data is restored, including the state dictionary and the class-to-index mapping.
+        Finally, the optimizer is restored from the loaded data.
+
+        Returns:
+        model (torch.nn.Module): The loaded model.
+        optimizer (torch.optim.Optimizer): The optimizer for the model.
         """
         # Load model data from file
         checkpoint_data = torch.load(
@@ -367,10 +411,18 @@ class FlowerClassifier:
         return model, optimizer
 
     def save_checkpoint(self):
-        """_summary_
-        Save checkpoint
         """
+        Saves the current state of the model as a checkpoint in a file. The file includes the
+        architecture of the model, the number of epochs trained, the learning rate, the  umber
+        of hidden units, the dropout rate, the state dictionary of the model and optimizer,
+        the classifier, and the class to index mapping.
 
+        The necessary data is collected in a dictionary and then saved with a name format as
+        'checkpoint_{architecture}{epochs}{hidden_units}{learning_rate}{dropout_rate}.pth'.
+
+        The saved checkpoint can be used later to load the model with the same state and
+        continue training or performing predictions.
+        """
         # Collect model data which should be saved
         checkpoint_data = {
             'arch': 'DenseNet121',
@@ -521,7 +573,7 @@ if __name__ == "__main__":
             "./flowers", './checkpoints', 'VGG16', 0.001, 512, 0.2, 10,
             category_mapping=CAT_NAMES, top_k=5, gpu=True)
 
-        training_classifier.train_network()
+        training_classifier.train_model()
         print('\nAccuracy of the network with validation data (not used before): '
               f'{training_classifier.get_modelaccuracy():.3f}\n')
         probabilities = training_classifier.classify_image(
