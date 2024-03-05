@@ -90,7 +90,7 @@ class FlowerClassifier:
         """_summary_
         Generates an instance based on a checkpoint file. 
 
-        Args:
+        Parameters:
             checkpoint_path (str): Path to the checkpoint file.
             category_mapping (str): Path to the category mapping file.
             top_k (int): Nummber of the top categories of the prediction to be showwn.
@@ -108,7 +108,7 @@ class FlowerClassifier:
         """_summary_
         Generated an instance based on training data
 
-        Args:
+        Parameters:
             data_dir (str): Path to the training image with subdirectories test, train, valid.
             save_dir (str): Path to the directory where the checkpoints will be saved.
             arch (string): Architecture of the model
@@ -130,7 +130,8 @@ class FlowerClassifier:
     def get_pretrained_model(self, arch):
         """_summary_
         Returns a pre-trained model based on the architecture specified.
-        Args:
+        
+        Parameters:
             arch (str): Name of the architecture
 
         Raises:
@@ -150,7 +151,7 @@ class FlowerClassifier:
         raise ValueError(f"Invalid arch value {arch}")
 
     def create_training_model(self):
-        """
+        """_summary_
         Creates and returns a customized training model along with an optimizer. The instance 
         of a pre-trained is of type AlexNet, DenseNet121 or VGG16. 
         
@@ -205,7 +206,7 @@ class FlowerClassifier:
         return model, optimizer
 
     def create_dataloaders(self):
-        """
+        """_summary_
         This method creates dataloaders for training, validation, and testing datasets.
 
         A series of transformations to the images are applied in each dataset, including
@@ -274,7 +275,7 @@ class FlowerClassifier:
         return data_loaders, image_datasets
 
     def train_model(self):
-        """
+        """_summary_
         Training of the neural network model. Initializes variables and sets the model to
         training mode. Iterates over all epochs and inputs to train the network.
         The inputs and labels are moved to the specified device, then a forward pass is
@@ -372,7 +373,7 @@ class FlowerClassifier:
             f'End training for device {self.device}, duration={elapsed_time}s')
 
     def load_model_from_checkpoint(self):
-        """
+        """_summary_
         Loads a trained model from a checkpoint file by loading required data from the file.
         It then retrieves architecture, number of epochs, learning rate, hidden units, and
         dropout rate from the loaded data.
@@ -411,7 +412,7 @@ class FlowerClassifier:
         return model, optimizer
 
     def save_checkpoint(self):
-        """
+        """_summary_
         Saves the current state of the model as a checkpoint in a file. The file includes the
         architecture of the model, the number of epochs trained, the learning rate, the  umber
         of hidden units, the dropout rate, the state dictionary of the model and optimizer,
@@ -447,7 +448,13 @@ class FlowerClassifier:
 
     def get_modelaccuracy(self):
         """_summary_
-        Determine the accuracy of the model with data it has not seen yet
+            This method calculates the accuracy of the model on the validation set.
+            It does this by iterating over all unknown (not trained/tested yet)
+            validation images, making predictions using the model, and comparing
+            these predictions with the actual labels.
+
+        Returns:
+            Accuracy(float): Correct predictions divided by the total number of images
         """
         # Initialize variables, assign model to device and set it to evaluation mode
         total_images = 0
@@ -475,10 +482,25 @@ class FlowerClassifier:
         return result
 
     def process_image(self, image):
-        ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
-            returns an Numpy array
-        '''
+        """_summary
+        Process an image file and return normalized numpy array of the image.
 
+        The processing steps include resizing the image to 256 pixels on the shortest side,
+        cropping a 224x224 pixel area from the center of the resized image, converting the
+        image to a numpy array and scaling the values between 0 and 1.
+
+        It also normalizes the image by subtracting the means per channel and dividing
+        by the standard deviations per channel.
+
+        Parameters:
+        image (str): The file path of the image to be processed.
+
+        Returns:
+        np_image(np.array): Processed image with channel information as the first dimension.
+
+        Raises:
+        FileNotFoundError: If the provided file path does not exist.
+        """
         # Load image and resize it to the shortest side
         pil_image = Image.open(image)
         width, height = pil_image.size
@@ -507,8 +529,20 @@ class FlowerClassifier:
         return np_image
 
     def classify_image(self, image_path, category_names):
-        """_summary_
-        Classify image
+        """_summary
+        This method is used to classify an input image based on a set of
+        predefined categories.
+
+        Parameters:
+        image_path (str): Image file to be classified.
+        category_names (str): JSON file containing the category names.
+
+        Returns:
+        category_class_mapping (list): A list of probabilities per flower.
+
+        Raises:
+        FileNotFoundError: If either of the input file paths do not exist.
+        ValueError: If the input image cannot be processed.
         """
         # Load categories in dictionary
         with open(category_names, 'r', encoding='utf-8') as f:
@@ -550,14 +584,19 @@ class FlowerClassifier:
         return category_class_mapping
 
 
+# Testing code used when the class is called directly
 if __name__ == "__main__":
+
+    # Define use cases and chose one
     USECASE_CHECKPOINT = 'checkpoint'
     USECASE_TRAINING = 'training'
-    USECASE = USECASE_TRAINING
+    USECASE = USECASE_CHECKPOINT
 
+    # Constants used for both use cases
     IMAGE_PATH = './flowers/test/10/image_07090.jpg'
     CAT_NAMES = './cat_to_name.json'
 
+    # Execute choosen use case
     if USECASE == USECASE_CHECKPOINT:
         # Test classification with saved checkpoint file
         checkpoint_classifier = FlowerClassifier.from_checkpoint(
@@ -565,7 +604,7 @@ if __name__ == "__main__":
 
         probabilities = checkpoint_classifier.classify_image(
             IMAGE_PATH, CAT_NAMES)
-
+        
     elif USECASE == USECASE_TRAINING:
         # Test classification with a self trained neural network.
         # Valid architectures: 'AlexNet', 'DenseNet121', 'VGG16'
@@ -583,6 +622,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Incorrect use case")
 
+    # Print the prediction result of the use case
     print(f'{IMAGE_PATH:<40} Probs')
     print(f'{"-" * 40} {"-" * 5}')
     for item in probabilities:
