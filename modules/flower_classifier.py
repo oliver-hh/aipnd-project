@@ -1,6 +1,7 @@
 """_summary_
 Module flower_classifier classifies flowers by a freshly trained network or 
 a loaded network. It containts the following classes and methods:
+- Some constants
 - Class FlowerClassifier
 """
 import os
@@ -30,7 +31,16 @@ BATCH_SIZE = 128
 
 class FlowerClassifier:
     """_summary_
-    Flower Classifier
+    Classifies flowers either by a freshly trained network or by a loading a checkpoint file.
+
+    To instantiate one of the two classification mode two instantiation methods are defined:
+    1.  from_checkpoint(...)
+    2.  from_training_data(...)
+
+    Training the network it based on one of the following Convolutional Neural Networks (CNNs) 
+    - AlexNet
+    - DenseNet121
+    - VGG16
     """
 
     def __init__(self,
