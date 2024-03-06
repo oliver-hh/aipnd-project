@@ -101,6 +101,8 @@ def get_train_input_args():
     # Custom error handling
     if not os.path.isdir(args.data_dir):
         raise ValueError(f'Data directory does not exist: {args.data_dir}')
+    if not os.path.isdir(args.save_dir):
+        raise ValueError(f'Save directory for checkpoint does not exist: {args.data_dir}')
     if args.learning_rate <= 0:
         raise ValueError('Learning rate must be positive.')
     if not 0 <= args.dropout_rate <= 1:
@@ -169,7 +171,9 @@ def get_predict_input_args():
 
     args = parser.parse_args()
 
-    # Check if files exist
+    # Custom error handling
+    if args.top_k < 1:
+        raise ValueError('Top k must be greater or equal 1.')
     if not os.path.exists(args.input):
         raise FileNotFoundError(f'File {args.input} does not exist.')
     if not os.path.exists(args.checkpoint):
