@@ -603,6 +603,7 @@ if __name__ == "__main__":
     USECASE = USECASE_CHECKPOINT
 
     # Constants used for both use cases
+    CHECKPOINT_FILE = './checkpoint.pth'
     IMAGE_PATH = './flowers/test/10/image_07090.jpg'
     CAT_NAMES = './cat_to_name.json'
 
@@ -610,7 +611,7 @@ if __name__ == "__main__":
     if USECASE == USECASE_CHECKPOINT:
         # Test classification with saved checkpoint file
         checkpoint_classifier = FlowerClassifier.from_checkpoint(
-            './checkpoint.pth', category_mapping='./cat_to_name.json', top_k=5, gpu=True)
+            IMAGE_PATH, category_mapping=CAT_NAMES, top_k=5, gpu=True)
 
         probabilities = checkpoint_classifier.classify_image(
             IMAGE_PATH, CAT_NAMES)
