@@ -34,6 +34,18 @@ Steps to download and install the images
 
 ## Training and Prediction from the Command Line
 
+```bash
+CHECKPOINT_FILE='./checkpoint.pth'
+IMAGE_PATH='./flowers/test/10/image_07090.jpg'
+CAT_NAMES='./cat_to_name.json'
+
+DATA_DIR='./flowers'
+python train.py $DATA_DIR
+
+python predict.py $IMAGE_PATH $CHECKPOINT_FILE --top-k 8
+```
+
+## Comparison of the different CNN types
 
 | Architecture | Duration | Accuracy |
 | ------------ | -------: | -------: |
