@@ -45,7 +45,7 @@ class FlowerClassifier:
 
     def __init__(self,
                  # Common parameters
-                 data_dir=None, category_mapping=None, top_k=None, gpu=None,
+                 data_dir=None, top_k=None, gpu=None,
                  # From checkpoint parameters
                  checkpoint_path=None,
                  # From training
@@ -54,7 +54,6 @@ class FlowerClassifier:
 
         # Initializae common parameters
         self.data_dir = data_dir
-        self.category_mapping = category_mapping
         self.top_k = top_k
 
         # Set device for training/infernence (fall back on cpu if necessary)
@@ -96,25 +95,23 @@ class FlowerClassifier:
             print(f'Dropout rate : {self.dropout_rate:>10}\n')
 
     @classmethod
-    def from_checkpoint(cls, checkpoint_path, category_mapping, top_k, gpu):
+    def from_checkpoint(cls, checkpoint_path, top_k, gpu):
         """_summary_
         Generates an instance based on a checkpoint file. 
 
         Parameters:
             checkpoint_path (str): Path to the checkpoint file.
-            category_mapping (str): Path to the category mapping file.
             top_k (int): Nummber of the top categories of the prediction to be showwn.
             gpu (bool): Use GPU for inference if available.
 
         Returns:
             FlowerClassifier: Instance based on checkoint
         """
-        return cls(checkpoint_path=checkpoint_path,
-                   category_mapping=category_mapping, top_k=top_k, gpu=gpu)
+        return cls(checkpoint_path=checkpoint_path, top_k=top_k, gpu=gpu)
 
     @classmethod
     def from_training_data(cls, data_dir, save_dir, arch, learning_rate, hidden_units,
-                           dropout_rate, epochs, category_mapping, top_k, gpu):
+                           dropout_rate, epochs, top_k, gpu):
         """_summary_
         Generated an instance based on training data
 
@@ -126,7 +123,6 @@ class FlowerClassifier:
             hidden_units (int): Number of hideen units
             dropout_rate (float): Dropout rate from 0 to 1
             epochs (int): Number of epochs used to train the network
-            category_mapping (string): Path to to file with the category mappings.
             top_k (int): Nummber of the top categories of the prediction to be showwn.
             gpu (bool): Use GPU for inference if available.
 
@@ -135,7 +131,7 @@ class FlowerClassifier:
         """
         return cls(data_dir, save_dir=save_dir, arch=arch, learning_rate=learning_rate,
                    hidden_units=hidden_units, dropout_rate=dropout_rate, epochs=epochs,
-                   category_mapping=category_mapping, top_k=top_k, gpu=gpu)
+                   top_k=top_k, gpu=gpu)
 
     def get_pretrained_model(self, arch):
         """_summary_
@@ -575,7 +571,7 @@ class FlowerClassifier:
             outputs = torch.exp(log_outputs)
 
         # Get the top 5 probabilities for matching classes
-        top_k, top_indices = outputs.topk(5, dim=1)
+        top_k, top_indices = outputs.topk(self.top_k, dim=1)
 
         # Convert/flatten top_k and top_indices from a tensor to an one-dimensional array
         top_k = top_k.cpu().numpy().flatten().tolist()
@@ -583,7 +579,7 @@ class FlowerClassifier:
 
         # Invert class_to_idx and map indices to the actual class labels
         idx_to_class = {v: k for k, v in self.model.class_to_idx.items()}
-        top_classes = [idx_to_class[top_indices[i]] for i in range(5)]
+        top_classes = [idx_to_class[top_indices[i]] for i in range(self.top_k)]
 
         # Map category names
         category_class_mapping = [{
@@ -610,18 +606,14 @@ if __name__ == "__main__":
     # Execute choosen use case
     if USECASE == USECASE_CHECKPOINT:
         # Test classification with saved checkpoint file
-        checkpoint_classifier = FlowerClassifier.from_checkpoint(
-            IMAGE_PATH, category_mapping=CAT_NAMES, top_k=5, gpu=True)
+        checkpoint_classifier = FlowerClassifier.from_checkpoint(IMAGE_PATH, top_k=5, gpu=True)
+        probabilities = checkpoint_classifier.classify_image(IMAGE_PATH, CAT_NAMES)
 
-        probabilities = checkpoint_classifier.classify_image(
-            IMAGE_PATH, CAT_NAMES)
-        
     elif USECASE == USECASE_TRAINING:
         # Test classification with a self trained neural network.
         # Valid architectures: 'AlexNet', 'DenseNet121', 'VGG16'
         training_classifier = FlowerClassifier.from_training_data(
-            "./flowers", './checkpoints', 'VGG16', 0.001, 512, 0.2, 10,
-            category_mapping=CAT_NAMES, top_k=5, gpu=True)
+            './flowers', './checkpoints', 'VGG16', 0.001, 512, 0.2, 10, top_k=5, gpu=True)
 
         training_classifier.train_model()
         print('\nAccuracy of the network with validation data (not used before): '
