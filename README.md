@@ -42,7 +42,7 @@ CAT_NAMES='./cat_to_name.json'
 DATA_DIR='./flowers'
 python train.py $DATA_DIR
 
-python predict.py $IMAGE_PATH $CHECKPOINT_FILE --top-k 8
+python predict.py $IMAGE_PATH $CHECKPOINT_FILE --top_k 3
 ```
 
 ## Comparison of the different CNN types
