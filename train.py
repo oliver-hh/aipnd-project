@@ -10,7 +10,9 @@ if __name__ == "__main__":
             args.data_dir, args.save_dir, args.arch, args.learning_rate, args.hidden_units,
             args.dropout_rate, args.epochs, args.gpu)
         
+        # Train network and save checkpoiint
         classifier.train_model()
+        classifier.save_checkpoint()
         
     except ValueError as ve:
         print(f'Value error: {str(ve)}')
