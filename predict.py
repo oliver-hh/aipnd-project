@@ -6,9 +6,9 @@ if __name__ == "__main__":
         args = get_predict_input_args()
         #print(args)
 
-        classifier = FlowerClassifier.from_checkpoint(args.checkpoint, args.top_k, args.gpu)
+        classifier = FlowerClassifier.from_checkpoint(args.checkpoint, args.gpu)
 
-        probabilities = classifier.classify_image(args.input, args.category_names)
+        probabilities = classifier.classify_image(args.input, args.top_k, args.category_names)
 
         # Print the prediction result of the use case
         print(f'{args.input:<40} Probs')
