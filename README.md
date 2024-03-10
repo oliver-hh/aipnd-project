@@ -35,12 +35,16 @@ Steps to download and install the images
 ## Training and Prediction from the Command Line
 
 ```bash
+DATA_DIR='./flowers'
+
+python train.py $DATA_DIR 
+python train.py $DATA_DIR --arch VGG16 --epochs 5 --gpu
+```
+
+```bash
 CHECKPOINT_FILE='./checkpoint.pth'
 IMAGE_PATH='./flowers/test/10/image_07090.jpg'
 CAT_NAMES='./cat_to_name.json'
-
-DATA_DIR='./flowers'
-python train.py $DATA_DIR
 
 python predict.py $IMAGE_PATH $CHECKPOINT_FILE --top_k 3
 ```
