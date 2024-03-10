@@ -35,7 +35,6 @@ def get_train_input_args():
         ValueError: Dropout rate is not between 0 and 1.
         ValueError: Hidden units is not a positive value.
         ValueError: Epochs is not a positive value.
-        FileNotFoundError: Category names file does not exist.
 
     Returns:  
     Namespace: An argparse.Namespace instance with the arguments parsed.
@@ -52,12 +51,6 @@ def get_train_input_args():
         type=str,
         default='.',
         help='Path to save trained model'
-    )
-    parser.add_argument(
-        '--category_names',
-        type=str,
-        default='cat_to_name.json',
-        help='File name for mapping of categories to real names'
     )
     parser.add_argument(
         '--arch',
@@ -111,8 +104,6 @@ def get_train_input_args():
         raise ValueError('Number of hidden units must be positive.')
     if args.epochs <= 0:
         raise ValueError('Number of epochs must be positive.')
-    if not os.path.exists(args.category_names):
-        raise FileNotFoundError(f'File {args.category_names} does not exist.')
 
     return args
 
