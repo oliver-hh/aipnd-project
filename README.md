@@ -3,39 +3,42 @@
 Project code for Udacity's AI Programming with Python Nanodegree program. In this project, students first develop code for an image classifier built with PyTorch, then convert it into a command line application.
 
 ## Project Structure and files
-The project has been forked from [udacity/aipnd-project](https://github.com/udacity/aipnd-project). All folders and files that have been modified are listed below with a short description:
+The project has been forked from [udacity/aipnd-project](https://github.com/udacity/aipnd-project). All folders and files that have been created or modified are listed below with a short description:
 
 
 ```
 root_directory/  
 |     
-+-- folder1/  
++-- modules/                  --> Self-written modules  
 |   |  
-|   +-- file1.txt  
-|   +-- file2.txt  
+|   +-- cmdline_args.py       --> Processing of command line args
+|   +-- flower_classifier.py  --> Common class for training and prediction
 |  
-+-- folder2/  
-|   |  
-|   +-- folder3/  
-|   |   |  
-|   |   +-- file3.txt  
++-- protocols/  --> Output of training runs for all CNN-types
+|   |               with accuracy and a test prediction
+|   +-- AlexNet.txt
+|   +-- DenseNet121.txt
+|   +-- VGG16.txt
+|  
++-- .gitignore  --> exclude folder flowers: training/testing/validation images
+|               --> exclude folder checkpoints: Checkpoint files  
+|  
++-- cat_to_name.json                --> Reformatted and sorted by class index,
+|                                       so that there is one line per class.
 |
-
- 
++-- checkpoint.pth                  --> Checkoint created by Jupyter Notebook 
+|
++-- Image Analysis.ipynb            --> Image characteristics, category files
+|
++-- Image Classifier Project.ipynb  --> Part 1 of the project: Implement
+|                                       training, accuracy determination,
+|                                       load/save models and prediction.
+|
++-- predict.py  --> Implementation of the prediction for flower images
++-- train.py    --> Implementation of the training of models
+|
++-- README.md   --> Documentation
 ```
-
-```mermaid
-graph TD;  
-    root_directory-->folder1;  
-    root_directory-->folder2;  
-    root_directory-->file5.txt;  
-    folder1-->file1.txt;  
-    folder1-->file2.txt;  
-    folder2-->folder3;  
-    folder2-->file4.txt;  
-    folder3-->file3.txt;  
-```
-
 
 ## System Setup
 
@@ -68,17 +71,71 @@ Steps to download and install the images
 3. Unzip the files into the previously created directory
 
 ## Training and Prediction from the Command Line
+Both functionalities have been implemented in a single class ```FlowerClassifier``` which is intended to be instantiated in either of two ways:
+1. ```from_training_data(...)```
+2. ```from_checkpoint(...)```
 
-### Training Neural Network
+Details for the parameters can be found in the inline documentation of ```flower_classifier.py```. This class makes it possible to keep the following scripts short and concise:
+1. ```train.py```: Training neural networks
+2. ```predict.py```: Classify a given image
 
+### Training neural networks
 
+**How to use the command line tool:**
+
+```
+usage: train.py [-h] [--save_dir SAVE_DIR] [--arch {AlexNet,DenseNet121,VGG16}] [--learning_rate LEARNING_RATE]
+                [--hidden_units HIDDEN_UNITS] [--dropout_rate DROPOUT_RATE] [--epochs EPOCHS] [--gpu]
+                data_dir
+
+positional arguments:
+  data_dir              Path to the folder of data
+
+options:
+  -h, --help            show this help message and exit
+  --save_dir SAVE_DIR   Path to save trained model
+  --arch {AlexNet,DenseNet121,VGG16}
+                        CNN Model Architecture
+  --learning_rate LEARNING_RATE
+                        Learning rate for model
+  --hidden_units HIDDEN_UNITS
+                        Number of hidden units in model
+  --dropout_rate DROPOUT_RATE
+                        Dropout rate from 0 to 1
+  --epochs EPOCHS       Number of epochs for training
+  --gpu                 Use GPU for training if available
+```
+
+**Example of training a neural network:**
 
 ```bash
 DATA_DIR='./flowers'
 
-python train.py $DATA_DIR 
 python train.py $DATA_DIR --arch VGG16 --epochs 5 --gpu
 ```
+
+Outputs can be seen in the files of folder ```./protocols/```.
+
+### Classify a given image
+
+**How to use the command line tool:**
+
+```
+usage: predict.py [-h] [--top_k TOP_K] [--category_names CATEGORY_NAMES] [--gpu] input checkpoint
+
+positional arguments:
+  input                 Path to the image to classify
+  checkpoint            Path to the checkpoint file that contains the trained network
+
+options:
+  -h, --help            show this help message and exit
+  --top_k TOP_K         Return top K most likely classes of the prediction
+  --category_names CATEGORY_NAMES
+                        File name for mapping of categories to real names
+  --gpu                 Use GPU for inference if available
+```
+
+**Example of predicting an image:**
 
 ```bash
 CHECKPOINT_FILE='./checkpoint.pth'
@@ -88,11 +145,14 @@ CAT_NAMES='./cat_to_name.json'
 python predict.py $IMAGE_PATH $CHECKPOINT_FILE --top_k 3
 ```
 
-## Comparison of the different CNN types
+**Output example:**
 
-| Architecture | Duration | Accuracy |
-| ------------ | -------: | -------: |
-| AlexNet      |     659s |    86.6% |
-| DenseNet121  |     810s |    89.6% |
-| VGG16        |    1099s |    90.1% |
-
+```
+./flowers/test/10/image_07090.jpg        Probs
+---------------------------------------- -----
+globe thistle                            0.953
+artichoke                                0.040
+spear thistle                            0.004
+alpine sea holly                         0.001
+pincushion flower                        0.001
+```
