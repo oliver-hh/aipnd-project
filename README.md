@@ -24,6 +24,7 @@ root_directory/
  
 ```
 
+```mermaid
 graph TD;  
     root_directory-->folder1;  
     root_directory-->folder2;  
@@ -33,7 +34,7 @@ graph TD;
     folder2-->folder3;  
     folder2-->file4.txt;  
     folder3-->file3.txt;  
-
+```
 
 
 ## System Setup
