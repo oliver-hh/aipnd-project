@@ -2,6 +2,40 @@
 
 Project code for Udacity's AI Programming with Python Nanodegree program. In this project, students first develop code for an image classifier built with PyTorch, then convert it into a command line application.
 
+## Project Structure and files
+The project has been forked from [udacity/aipnd-project](https://github.com/udacity/aipnd-project). All folders and files that have been modified are listed below with a short description:
+
+
+```
+root_directory/  
+|     
++-- folder1/  
+|   |  
+|   +-- file1.txt  
+|   +-- file2.txt  
+|  
++-- folder2/  
+|   |  
+|   +-- folder3/  
+|   |   |  
+|   |   +-- file3.txt  
+|
+
+ 
+```
+
+graph TD;  
+    root_directory-->folder1;  
+    root_directory-->folder2;  
+    root_directory-->file5.txt;  
+    folder1-->file1.txt;  
+    folder1-->file2.txt;  
+    folder2-->folder3;  
+    folder2-->file4.txt;  
+    folder3-->file3.txt;  
+
+
+
 ## System Setup
 
 The solution has been developed locally with *Anaconda* based on a fork of the [Starter Code](https://github.com/udacity/aipnd-project).
@@ -33,6 +67,10 @@ Steps to download and install the images
 3. Unzip the files into the previously created directory
 
 ## Training and Prediction from the Command Line
+
+### Training Neural Network
+
+
 
 ```bash
 DATA_DIR='./flowers'
